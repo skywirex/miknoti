@@ -145,7 +145,7 @@ You can also **power ON** the server remotely using Wake-on-LAN.
 2. Use Wake-on-LAN:
 
 ```routeros
-/tool wol mac=AA:BB:CC:DD:EE:FF interface=ether2
+/tool wol mac=AA:BB:CC:DD:EE:FF interface=bridgeLAN
 ```
 
 ![image](https://pub-b731809282d4443bba205fbf4c8ae4ee.r2.dev/dda861f6b242d53735f4736debf46783.png)
