@@ -54,7 +54,7 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
 
 | File                      | Description                    |
 | ------------------------- | ------------------------------ |
-| `TelegramSendMessage.rsc` | Telegram send function         |
+| `MikNotiMessage.rsc`      | Telegram send function         |
 | `OMV_Monitor.rsc`         | Example OpenMediaVault monitor |
 
 ---
@@ -66,13 +66,13 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
 1. Go to **System → Scripts → Add New**
 2. Set:
 
-   * **Name**: `TelegramSendMessage`
+   * **Name**: `MikNotiMessage`
    * **Policies**:
      ✅ read
      ✅ write
      ✅ policy
      ✅ test
-3. Copy the content of `TelegramSendMessage.rsc`
+3. Copy the content of `MikNotiMessage.rsc`
 4. Replace:
 
    * `tgBotToken`
@@ -83,7 +83,7 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
 #### Test in terminal
 
 ```routeros
-$TelegramSendMessage message="Test message from MikroTik"
+$MikNotiMessage message="Test message from MikroTik"
 ```
 
 If successful, you will receive a Telegram message immediately.
