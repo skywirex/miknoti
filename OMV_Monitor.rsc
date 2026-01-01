@@ -1,4 +1,4 @@
-# Monitoring the status of machine
+# Monitoring the status of server
 :global TelegramSendMessage
 /system script run TelegramSendMessage
 
@@ -19,8 +19,8 @@
     :local curTime [/system clock get time]
     :local curDate [/system clock get date]
     
-    # Note: Using %20 instead of spaces for safer URL delivery
-    :local msg "OpenMediaVault is $state%0AIP: $omvIp%0ATime: $curTime%0ADate: $curDate"
+    # Note: Using `\n` for the new line
+    :local msg "OpenMediaVault is $state\nIP: $omvIp\nTime: $curTime\nDate: $curDate"
     
     # Call the global function
     $TelegramSendMessage message=$msg

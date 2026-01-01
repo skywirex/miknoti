@@ -38,7 +38,7 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
 ### 2️⃣ MikroTik Router
 
 * Running **RouterOS**
-* Admin access via Winbox, WebFig, or SSH
+* Admin access via Winbox, or SSH
 
 ### 3️⃣ Telegram Bot
 
@@ -77,12 +77,13 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
 
    * `tgBotToken`
    * `tgChatID`
-     with your own Telegram details
+   
+   with your own Telegram details
 
 #### Test in terminal
 
 ```routeros
-$TelegramSendMessage message="Test message from MikroTik%0ASecond line%0ABold: <b>works</b>"
+$TelegramSendMessage message="Test message from MikroTik"
 ```
 
 If successful, you will receive a Telegram message immediately.

@@ -5,9 +5,10 @@
     :local tgMsg $message
 
     :if ([:len $tgMsg] > 0) do={
-        :local url ("https://api.telegram.org/bot" . $tgBotToken . "/sendMessage?chat_id=" . $tgChatID . "&text=" . $tgMsg . "&parse_mode=HTML")
+        :local url ("https://api.telegram.org/bot" . $tgBotToken . "/sendMessage")
+        :local payload ("{\"chat_id\":\"" . $tgChatID . "\",\"text\":\"" . $tgMsg . "\",\"parse_mode\":\"HTML\"}")
 
-        :local result [/tool fetch url=$url mode=https keep-result=no as-value]
+        :local result [/tool fetch url=$url http-method=post http-data=$payload http-header-field="Content-Type: application/json" mode=https keep-result=no as-value]
         :if ($result->"status" = "finished") do={
             :log info ("Telegram sent: " . $tgMsg)
         } else={
