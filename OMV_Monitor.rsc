@@ -1,6 +1,6 @@
 # Monitoring the status of server
+/system script run MikNotiMessage
 :global TelegramSendMessage
-/system script run TelegramSendMessage
 
 # Config
 :global omvLastStatus
