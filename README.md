@@ -10,7 +10,7 @@ Send notifications from a **MikroTik RouterOS** device using scripts, with a rea
 
 **miknoti** is a lightweight collection of RouterOS scripts that enables your MikroTik router to:
 
-* 📩 Send notifications to Telegram, Discord ... 
+* 📩 Send notifications to Telegram ... 
 * 🔍 Monitor server availability (ping-based)
 * ⏱ Run checks automatically via Scheduler
 
@@ -117,7 +117,7 @@ You will receive a Telegram notification if the server state changes.
 
 ---
 
-## ⏱️ Automate with Scheduler (Recommended)
+## ⏱️ Automate with Scheduler
 
 Run the monitor every 1 minutes:
 
@@ -152,10 +152,6 @@ You can also **power ON** the server remotely using Wake-on-LAN.
 
 ---
 
-## 🔌 Integration Ideas
+## To Do
 
-You can reuse `TelegramSendMessage` for:
-
-* Interface up/down alerts
-* PPPoE user status
-* Security alerts
+* Notifications for Discord, ntfy
