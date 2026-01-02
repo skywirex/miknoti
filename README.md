@@ -2,7 +2,9 @@
 
 Send notifications from a **MikroTik RouterOS** device using scripts, with a real-world example of **monitoring server on/off status** (OpenMediaVault) and sending alerts via **Telegram** or **Discord**.
 
-![image](https://pub-b731809282d4443bba205fbf4c8ae4ee.r2.dev/8b9b94b2ade751f2d3839d8520c5e270.png)
+| Telegram Notification                                                                              | Discord Notification                                                                               |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| ![image](https://pub-b731809282d4443bba205fbf4c8ae4ee.r2.dev/8b9b94b2ade751f2d3839d8520c5e270.png) | ![image](https://pub-b731809282d4443bba205fbf4c8ae4ee.r2.dev/6e9911cec007f9b280019a999511d966.png) |
 
 ---
 
