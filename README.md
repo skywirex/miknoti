@@ -1,6 +1,6 @@
 # miknoti — MikroTik Notification Scripts
 
-Send notifications from a **MikroTik RouterOS** device using scripts, with a real-world example of **monitoring server on/off status** (OpenMediaVault) and sending alerts via **Telegram**.
+Send notifications from a **MikroTik RouterOS** device using scripts, with a real-world example of **monitoring server on/off status** (OpenMediaVault) and sending alerts via **Telegram** or **Discord**.
 
 ![image](https://pub-b731809282d4443bba205fbf4c8ae4ee.r2.dev/8b9b94b2ade751f2d3839d8520c5e270.png)
 
@@ -8,9 +8,9 @@ Send notifications from a **MikroTik RouterOS** device using scripts, with a rea
 
 ## 🚀 Overview
 
-**miknoti** is a lightweight collection of RouterOS scripts that enables your MikroTik router to:
+**miknoti** is a collection of RouterOS scripts that enables your MikroTik router to:
 
-* 📩 Send notifications to Telegram ... 
+* 📩 Send notifications to Telegram and Discord
 * 🔍 Monitor server availability (ping-based)
 * ⏱ Run checks automatically via Scheduler
 
@@ -21,6 +21,7 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
 ## Features
 
 * Telegram notification sender script
+* Discord notification sender script
 * Server availability monitoring (ping / ICMP)
 * Status-change detection (UP → DOWN, DOWN → UP)
 * Pure RouterOS scripting — no external dependencies
@@ -48,20 +49,33 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
 📘 Guide to create Telegram bot & get chat ID:
 👉 [Telegram bot & get chat ID](https://skywirex.com/create-telegram-bot-get-chat-id/)
 
+### 4️⃣ Discord Webhook (Optional)
+
+* A Discord server with admin access
+* A Discord channel webhook URL
+
+#### How to Create a Discord Webhook:
+
+1. **Channel Settings** → **Integrations**
+2. Click **Create Webhook**
+3. Name the webhook (e.g., "RouterOS Notifications")
+4. **Copy Webhook URL**
+5. Paste the URL in `MikNotiMessage.rsc` → `discordWebhookUrl`
+
 ---
 
 ## 📦 Repository Structure
 
 | File                      | Description                    |
 | ------------------------- | ------------------------------ |
-| `MikNotiMessage.rsc`      | Telegram send function         |
+| `MikNotiMessage.rsc`      | Telegram & Discord send functions |
 | `OMV_Monitor.rsc`         | Example OpenMediaVault monitor |
 
 ---
 
 ## 🛠️ Installation & Setup
 
-### Step 1️⃣ Create Telegram Send Function Script
+### Step 1️⃣ Create Message Function Script
 
 1. Go to **System → Scripts → Add New**
 2. Set:
@@ -80,13 +94,21 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
    
    with your own Telegram details
 
-#### Test in terminal
+#### Test Telegram in terminal
 
 ```routeros
-$MikNotiMessage message="Test message from MikroTik"
+$TelegramSendMessage message="Test message from MikroTik"
 ```
 
 If successful, you will receive a Telegram message immediately.
+
+#### Test Discord (if configured)
+
+```routeros
+$DiscordSendMessage message="Test message from MikroTik"
+```
+
+If successful, you will receive a Discord message in the configured channel.
 
 ---
 
@@ -108,6 +130,8 @@ If successful, you will receive a Telegram message immediately.
    :local omvIp "172.16.0.10"
    ```
 
+> **ℹ️ Note**: Discord notifications are **disabled by default**. To enable Discord notifications, uncomment the lines that create `$embedPayload`, `$discordMsg`, and the `$DiscordSendMessage` function call in the script.
+
 #### Run manually
 
 ```routeros
@@ -120,7 +144,7 @@ You will receive a Telegram notification if the server state changes.
 
 ## ⏱️ Automate with Scheduler
 
-Run the monitor every 1 minutes:
+Run the monitor every 1 minute:
 
 ```routeros
 /system scheduler add \
@@ -155,4 +179,4 @@ You can also **power ON** the server remotely using Wake-on-LAN.
 
 ## To Do
 
-* Notifications for Discord, ntfy
+* Notifications for ntfy
