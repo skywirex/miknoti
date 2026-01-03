@@ -22,17 +22,28 @@
     :set dnsLastStatus "init"
 }
 
-# ===== FUNCTIONS =====
+# ===== MAIN =====
 
-:local function getDnsServers do={
-    :local dnsServers ""
-    :foreach entry in=[/ip dns static find] do={
-        :local addr [/ip dns static get $entry address]
-        :set dnsServers ($dnsServers . $addr . ",")
+:local privateDnsStatus "offline"
+:local currentDnsStatus $dnsFailoverStatus
+
+# Test private DNS connectivity
+:local resolveResult ""
+:do {
+    :set resolveResult [/resolve $testDomain server=$privateDnsIp]
+    :if ([:len $resolveResult] > 0) do={
+        :set privateDnsStatus "online"
+    } else={
+        :set privateDnsStatus "offline"
     }
-    :return $dnsServers
+} on-error={
+    # If /resolve fails with an error, consider private DNS offline
+    :set privateDnsStatus "offline"
+    :log warning "DNS Failover: Error resolving $testDomain via $privateDnsIp."
 }
 
+
+# Check if status changed
 :local function setDnsServers do={
     :local mode $1
     :local msg ""
@@ -52,28 +63,6 @@
     :return $msg
 }
 
-# ===== MAIN LOGIC =====
-
-:local privateDnsStatus "offline"
-:local currentDnsStatus $dnsFailoverStatus
-:local resolveResult ""
-
-# Test private DNS connectivity
-:do {
-    :set resolveResult [/resolve $testDomain server=$privateDnsIp]
-    :if ([:len $resolveResult] > 0) do={
-        :set privateDnsStatus "online"
-    } else={
-        :set privateDnsStatus "offline"
-    }
-} on-error={
-    # If /resolve fails with an error, consider private DNS offline
-    :set privateDnsStatus "offline"
-    :log warning "DNS Failover: Error resolving $testDomain via $privateDnsIp."
-}
-
-
-# Check if status changed
 :if ($privateDnsStatus != $dnsLastStatus) do={
     :local msg ""
     :local curTime [/system clock get time]
