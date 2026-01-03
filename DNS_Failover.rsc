@@ -10,20 +10,17 @@
 :local privateDnsIp "172.16.0.25"
 :local primaryDns $privateDnsIp
 :local secondaryDns "8.8.8.8"
-:local tertiaryDns "8.8.4.4"
 :local testDomain "google.com"
 :local checkInterval 1
 
 # ===== GLOBAL VARIABLES =====
 :global dnsFailoverStatus
 :global dnsLastStatus
-:global dnsFailoverTime
 
 # Initialize status if not exists
 :if (([:typeof $dnsFailoverStatus] = "nothing")) do={
     :set dnsFailoverStatus "private"
     :set dnsLastStatus "init"
-    :set dnsFailoverTime [/system clock get time]
 }
 
 # ===== FUNCTIONS =====
@@ -65,8 +62,8 @@
     } else {
         # Set to Google DNS
         /ip dns set servers=$secondaryDns allow-remote-requests=yes
-        :set msg ("DNS switched to <b>GOOGLE</b> (" . $secondaryDns . ", " . $tertiaryDns . ")")
-        :log info "DNS switched to GOOGLE: $secondaryDns, $tertiaryDns"
+        :set msg ("DNS switched to <b>GOOGLE</b> (" . $secondaryDns . ")")
+        :log info "DNS switched to GOOGLE: $secondaryDns"
     }
     
     :return $msg
@@ -76,13 +73,22 @@
 
 :local privateDnsStatus "offline"
 :local currentDnsStatus $dnsFailoverStatus
+:local resolveResult ""
 
 # Test private DNS connectivity
-:if ([:len [/resolve $testDomain server=$privateDnsIp]] > 0) do={
-    :set privateDnsStatus "online"
-} else={
+:do {
+    :set resolveResult [/resolve $testDomain server=$privateDnsIp]
+    :if ([:len $resolveResult] > 0) do={
+        :set privateDnsStatus "online"
+    } else={
+        :set privateDnsStatus "offline"
+    }
+} on-error={
+    # If /resolve fails with an error, consider private DNS offline
     :set privateDnsStatus "offline"
+    :log warning "DNS Failover: Error resolving $testDomain via $privateDnsIp. Assuming private DNS is offline."
 }
+
 
 # Check if status changed
 :if ($privateDnsStatus != $dnsLastStatus) do={
@@ -107,7 +113,7 @@
     :if ($dnsFailoverStatus = "private") do={
         :set currentDnsDisplay ("Currently using: <b>PRIVATE DNS</b> (" . $primaryDns . ")")
     } else={
-        :set currentDnsDisplay ("Currently using: <b>GOOGLE DNS</b> (" . $secondaryDns . ", " . $tertiaryDns . ")")
+        :set currentDnsDisplay ("Currently using: <b>GOOGLE DNS</b> (" . $secondaryDns . ")")
     }
     :local tgMsg ($msg . "\nPrivate DNS IP: " . $privateDnsIp . "\n" . $currentDnsDisplay . "\nTime: " . $curTime . "\nDate: " . $curDate . "\nStatus: " . $privateDnsStatus)
     
@@ -120,7 +126,6 @@
     #$DiscordSendMessage message=$discordMsg
     
     :set dnsLastStatus $privateDnsStatus
-    :set dnsFailoverTime $curTime
 } else={
     :log debug "DNS Failover: Status unchanged - $privateDnsStatus"
 }
