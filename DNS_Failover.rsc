@@ -78,7 +78,7 @@
 :local currentDnsStatus $dnsFailoverStatus
 
 # Test private DNS connectivity
-:if ([/ping $privateDnsIp count=1] > 0) do={
+:if ([:len [/resolve $testDomain server=$privateDnsIp]] > 0) do={
     :set privateDnsStatus "online"
 } else={
     :set privateDnsStatus "offline"
