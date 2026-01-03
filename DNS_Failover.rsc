@@ -91,11 +91,11 @@
     }
     :local tgMsg ($msg . "\nPrivate DNS IP: " . $privateDnsIp . "\n" . $currentDnsDisplay . "\nTime: " . $curTime . "\nDate: " . $curDate . "\nStatus: " . $privateDnsStatus)
     
-    # Discord message using Embed format (UNCOMMENT to enable)
+    # Discord message using Embed format, UNCOMMENT to enable Discord
     #:local embedPayload ("{\"embeds\":[{\"fields\":[{\"name\":\"" . $msg . "\",\"value\":\"Private DNS IP: " . $privateDnsIp . "\\n" . $currentDnsDisplay . "\\nTime: " . $curTime . "\\nDate: " . $curDate . "\\nStatus: " . $privateDnsStatus . "\"}]}]}")
     #:local discordMsg $embedPayload
     
-    # Send notifications
+    # Send notifications, UNCOMMENT to enable Discord
     $TelegramSendMessage message=$tgMsg
     #$DiscordSendMessage message=$discordMsg
     
