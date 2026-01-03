@@ -2,10 +2,6 @@
 # =====Automatic DNS Failover Monitor=====
 # Switches between Private DNS and Google DNS based on connectivity status
 
-:global TelegramSendMessage
-:global DiscordSendMessage
-/system script run MikNotiMessage
-
 # ===== CONFIG =====
 :local privateDnsIp "172.16.0.25"
 :local primaryDns $privateDnsIp
@@ -16,6 +12,9 @@
 # ===== GLOBAL VARIABLES =====
 :global dnsFailoverStatus
 :global dnsLastStatus
+:global TelegramSendMessage
+:global DiscordSendMessage
+/system script run MikNotiMessage
 
 # Initialize status if not exists
 :if (([:typeof $dnsFailoverStatus] = "nothing")) do={
