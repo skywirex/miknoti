@@ -82,11 +82,13 @@
     
     :if ($privateDnsStatus = "online") do={
         # Private DNS is back online, switch back
+        /ip dns set servers=$primaryDns allow-remote-requests=yes
         :set msg [$setDnsServers "private"]
         :set dnsFailoverStatus "private"
         :log info "DNS Failover: Switched back to PRIVATE DNS"
     } else={
         # Private DNS is down, switch to Google DNS
+        /ip dns set servers=$secondaryDns allow-remote-requests=yes
         :set msg [$setDnsServers "google"]
         :set dnsFailoverStatus "google"
         :log info "DNS Failover: Switched to GOOGLE DNS"
