@@ -16,7 +16,7 @@ Send notifications from a **MikroTik RouterOS** device using scripts, with a rea
 * 🔍 Monitor server availability (ping-based)
 * ⏱ Run checks automatically via Scheduler
 
-The included example monitors the **on/off status of an OpenMediaVault (OMV) server** on a local network and sends notifications when its status changes.
+The included examples monitor the **on/off status of an OpenMediaVault (OMV) server** on a local network and send notifications when status changes. Optional DNS failover monitoring is also available.
 
 ---
 
@@ -72,6 +72,7 @@ The included example monitors the **on/off status of an OpenMediaVault (OMV) ser
 | ------------------------- | ------------------------------ |
 | `MikNotiMessage.rsc`      | Telegram & Discord send functions |
 | `OMV_Monitor.rsc`         | Example OpenMediaVault monitor |
+| `DNS_Failover.rsc`        | Automatic DNS failover monitor |
 
 ---
 
@@ -159,7 +160,62 @@ The script will only notify when the status **actually changes**, avoiding spam.
 
 ---
 
-## (Optional) Wake-on-LAN from MikroTik
+## 🔄 DNS Failover Monitor
+
+Automatically switches between your **private DNS** and **Google DNS** based on connectivity.
+
+### Features
+
+* Monitors private DNS server availability via ping
+* Automatically switches to Google DNS (8.8.8.8 / 8.8.4.4) if private DNS is unreachable
+* Switches back to private DNS when it becomes available again
+* Sends Telegram/Discord notifications on DNS switchover
+* Tracks DNS status and failover time
+
+### Step 3️⃣ Create DNS Failover Script
+
+1. Go to **System → Scripts → Add New**
+2. Set:
+
+   * **Name**: `DNS_Failover`
+   * **Policies**:
+     ✅ read
+     ✅ write
+     ✅ policy
+     ✅ test
+3. Copy the content of `DNS_Failover.rsc`
+4. Edit the script and set:
+
+   ```routeros
+   :local privateDnsIp "8.8.8.8"     # Replace with your private DNS server IP
+   ```
+
+> **ℹ️ Note**: The default primary DNS is set to 8.8.8.8. Replace this with your actual private DNS server IP address (e.g., 192.168.1.1, 10.0.0.1, etc.)
+
+#### Run manually
+
+```routeros
+/system script run DNS_Failover
+```
+
+You will receive a Telegram notification if a DNS switchover occurs.
+
+---
+
+## ⏱️ Automate DNS Failover with Scheduler
+
+Run the DNS monitor every 1 minute:
+
+```routeros
+/system scheduler add \
+name=dns-failover \
+interval=1m \
+on-event="/system script run DNS_Failover"
+```
+
+The script will only notify when DNS status **actually changes**, avoiding spam.
+
+---
 
 You can also **power ON** the server remotely using Wake-on-LAN.
 
