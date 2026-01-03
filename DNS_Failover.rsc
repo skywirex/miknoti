@@ -24,22 +24,6 @@
 }
 
 # ===== FUNCTIONS =====
-:local function testDns do={
-    :local dnsServer $1
-    :local domain $2
-    :local testResult false
-    
-    # Perform DNS resolution test
-    :do {
-        :if ([/ip dns cache print count-only where name=$domain] > 0) do={
-            :set testResult true
-        }
-    } on-error={
-        :set testResult false
-    }
-    
-    :return $testResult
-}
 
 :local function getDnsServers do={
     :local dnsServers ""
@@ -86,7 +70,7 @@
 } on-error={
     # If /resolve fails with an error, consider private DNS offline
     :set privateDnsStatus "offline"
-    :log warning "DNS Failover: Error resolving $testDomain via $privateDnsIp. Assuming private DNS is offline."
+    :log warning "DNS Failover: Error resolving $testDomain via $privateDnsIp."
 }
 
 
