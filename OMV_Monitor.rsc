@@ -22,10 +22,10 @@
     :local curDate [/system clock get date]
     
     # Telegram message with proper formatting
-    :local tgMsg ("OpenMediaVault is <b>" . $state . "</b>\nIP: " . $omvIp . "\nTime: " . $curTime . "\nDate: " . $curDate)
+    :local tgMsg ("OpenMediaVault is <b>" . $state . "</b>\nIP: " . $omvIp . "\nTime: " . $curDate . " " . $curTime)
     
     # Discord message using Embed format, UNCOMMENT to enable Discord
-    #:local embedPayload ("{\"embeds\":[{\"fields\":[{\"name\":\"OpenMediaVault is " . $state . "\",\"value\":\"IP: " . $omvIp . "\\nTime: " . $curTime . "\\nDate: " . $curDate . "\"}]}]}")
+    #:local embedPayload ("{\"embeds\":[{\"fields\":[{\"name\":\"OpenMediaVault is " . $state . "\",\"value\":\"IP: " . $omvIp . "\\nTime: " . $curDate . " " . $curTime . "\"}]}]}")
     #:local discordMsg $embedPayload
     
     # Call functions, UNCOMMENT to enable Discord

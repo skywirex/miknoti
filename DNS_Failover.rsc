@@ -82,8 +82,8 @@
     }
     
     # Notification Formatting, UNCOMMENT to enable Discord
-    :local tgMsg ("<b>" . $msg . "</b>\nTime: " . $curTime . "\nDate: " . $curDate . "\nPrivate DNS: " . $privateDnsStatus)
-    #:local discordMsg ("{\"embeds\":[{\"fields\":[{\"name\":\"" . $msg . "\",\"value\":\"Time: " . $curTime . "\\nDate: " . $curDate . "\\nPrivate DNS: " . $privateDnsStatus . "\"}]}]}")    
+    :local tgMsg ("<b>" . $msg . "</b>\nTime: " . $curDate . " " . $curTime . "\nPrivate DNS: " . $privateDnsStatus)
+    #:local discordMsg ("{\"embeds\":[{\"fields\":[{\"name\":\"" . $msg . "\",\"value\":\"Time: " . $curDate . " " . $curTime . "\\nPrivate DNS: " . $privateDnsStatus . "\"}]}]}")    
     
     # Send notifications, UNCOMMENT to enable Discord
     $TelegramSendMessage message=$tgMsg
