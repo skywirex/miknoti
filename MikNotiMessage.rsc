@@ -1,5 +1,14 @@
 # =====Script Name: MikNotiMessage=====
 
+# ===== INTERNET CHECK =====
+:global MikNotiCheckConn do={
+    :if ([/ping 8.8.8.8 count=1] = 0) do={
+        :log warning ("$service: No internet connection. Message skipped.")
+        :return false
+    }
+    :return true
+}
+
 # ===== TELEGRAM =====
 :global TelegramSendMessage do={
     # ===== CONFIG =====
@@ -7,8 +16,8 @@
     :local tgChatID "123456789"
     :local tgMsg $message
 
-    :if ([/ping 8.8.8.8 count=1] = 0) do={
-        :log warning "TelegramSendMessage: No internet connection. Message skipped."
+    :global MikNotiCheckConn
+    :if ([$MikNotiCheckConn service="TelegramSendMessage"] = false) do={
         :return nil
     }
 
@@ -33,8 +42,8 @@
     :local discordWebhookUrl "https://discordapp.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
     :local discordMsg $message
 
-    :if ([/ping 8.8.8.8 count=1] = 0) do={
-        :log warning "DiscordSendMessage: No internet connection. Message skipped."
+    :global MikNotiCheckConn
+    :if ([$MikNotiCheckConn service="DiscordSendMessage"] = false) do={
         :return nil
     }
 
