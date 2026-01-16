@@ -7,6 +7,11 @@
     :local tgChatID "123456789"
     :local tgMsg $message
 
+    :if ([/ping 8.8.8.8 count=1] = 0) do={
+        :log warning "TelegramSendMessage: No internet connection. Message skipped."
+        :return nil
+    }
+
     :if ([:len $tgMsg] > 0) do={
         :local url ("https://api.telegram.org/bot" . $tgBotToken . "/sendMessage")
         :local payload ("{\"chat_id\":\"" . $tgChatID . "\",\"text\":\"" . $tgMsg . "\",\"parse_mode\":\"HTML\"}")
@@ -27,6 +32,11 @@
     # ===== CONFIG =====
     :local discordWebhookUrl "https://discordapp.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
     :local discordMsg $message
+
+    :if ([/ping 8.8.8.8 count=1] = 0) do={
+        :log warning "DiscordSendMessage: No internet connection. Message skipped."
+        :return nil
+    }
 
     :if ([:len $discordMsg] > 0) do={
         :local result [/tool fetch url=$discordWebhookUrl http-method=post http-data=$discordMsg http-header-field="Content-Type: application/json" mode=https keep-result=no as-value]
