@@ -73,6 +73,7 @@ The included examples monitor the **on/off status of an OpenMediaVault (OMV) ser
 | `MikNotiMessage.rsc`      | Telegram & Discord send functions |
 | `OMV_Monitor.rsc`         | Example OpenMediaVault monitor |
 | `DNS_Failover.rsc`        | Automatic DNS failover monitor |
+| `DailyBackup.rsc`         | Daily backup with SFTP & Retention |
 
 ---
 
@@ -214,6 +215,54 @@ on-event="/system script run DNS_Failover"
 ```
 
 The script will only notify when DNS status **actually changes**, avoiding spam.
+
+---
+
+## 💾 Daily Backup Script
+
+Creates daily backups, manages retention, and optionally uploads to SFTP.
+
+### Features
+
+* **Dual Backup**: Creates both binary (`.backup`) and script (`.rsc`) exports.
+* **Smart Naming**: Files are named `YYYYMMDD-Identity`.
+* **Retention Policy**: Automatically deletes local backups older than 5 days on `usb1-part1`.
+* **SFTP Upload**: Optional secure upload to a remote server.
+* **Notifications**: Sends status reports via Telegram/Discord.
+
+### Step 4️⃣ Create Daily Backup Script
+
+1. Go to **System → Scripts → Add New**
+2. Set:
+   * **Name**: `DailyBackup`
+   * **Policies**:
+     ✅ read
+     ✅ write
+     ✅ policy
+     ✅ test
+     ✅ sensitive (required if storing SSH passwords)
+3. Copy the content of `DailyBackup.rsc`
+4. **Configuration**:
+   Edit the top section to enable SSH/SFTP if desired:
+
+   ```routeros
+   :local sshEnabled true
+   :local sshAddress "192.168.1.100"
+   :local sshUser "backup_user"
+   :local sshPassword "your_password"
+   ```
+
+### ⏱️ Automate Backup with Scheduler
+
+Run the backup every day at 3:00 AM:
+
+```routeros
+/system scheduler add \
+name=daily-backup \
+start-time=03:00:00 \
+interval=1d \
+on-event="/system script run DailyBackup"
+```
 
 ---
 
