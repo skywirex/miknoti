@@ -5,6 +5,7 @@
 #   - Handles both RouterOS v6 (dont-encrypt=yes) and v7 (default unencrypted).
 
 :local sysname [/system identity get name]
+:local serialNumber [/system routerboard get serial-number]
 :local date [/system clock get date]
 :local time [/system clock get time]
 
@@ -47,8 +48,8 @@
 # Ensure day is 2 digits
 :if ([:tonum $day] < 10) do={ :set day ("0" . [:tonum $day]) }
 
-# Construct Filename: YYYYMMDD-Identity
-:local filename "$year$monthStr$day-$sysname"
+# Construct Filename: YYYYMMDD-Identity-SerialNumber
+:local filename "$year$monthStr$day-$sysname-$serialNumber"
 :if ([:pick $backupPath ([:len $backupPath]-1) [:len $backupPath]] = "/") do={ :set backupPath [:pick $backupPath 0 ([:len $backupPath]-1)] }
 :local filepath "$backupPath/$filename"
 
