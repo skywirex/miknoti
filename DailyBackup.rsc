@@ -26,17 +26,8 @@
 :local year [:pick $date 7 11]
 
 # Convert month name to number
-:local monthNum 0
-:foreach i in=$months do={
-    :set monthNum ($monthNum + 1)
-    :if ($i = $monthStr) do={
-        :if ($monthNum < 10) do={
-            :set monthStr ("0" . $monthNum)
-        } else={
-            :set monthStr [ :tostr $monthNum ]
-        }
-    }
-}
+:local monthNum ([:find $months $monthStr] + 1)
+:if ($monthNum < 10) do={ :set monthStr ("0" . $monthNum) } else={ :set monthStr [:tostr $monthNum] }
 
 # Construct Filename: YYYYMMDD-Identity
 :local filename "$year$monthStr$day-$sysname"
@@ -80,24 +71,7 @@
     }
 }
 
-# 4. Send Notification
-:global TelegramSendMessage
-:global DiscordSendMessage
-:local tgMsg ""
-:local discordMsg ""
-
-:if ($processError) do={
-    :set tgMsg ("Backup <b>FAILED</b>\nDevice: " . $sysname . "\nError: " . $logMessage . "\nTime: " . $date . " " . $time)
-    :set discordMsg ("{\"embeds\":[{\"color\":16711680,\"fields\":[{\"name\":\"Backup FAILED\",\"value\":\"Device: " . $sysname . "\\nError: " . $logMessage . "\\nTime: " . $date . " " . $time . "\"}]}]}")
-} else={
-    :set tgMsg ("Backup <b>SUCCESS</b>\nDevice: " . $sysname . "\nFile: " . $filename . "\nTime: " . $date . " " . $time)
-    :set discordMsg ("{\"embeds\":[{\"color\":65280,\"fields\":[{\"name\":\"Backup SUCCESS\",\"value\":\"Device: " . $sysname . "\\nFile: " . $filename . "\\nTime: " . $date . " " . $time . "\"}]}]}")
-}
-
-:if ([:typeof $TelegramSendMessage] = "code") do={ $TelegramSendMessage message=$tgMsg }
-:if ([:typeof $DiscordSendMessage] = "code") do={ $DiscordSendMessage message=$discordMsg }
-
-# 5. Retention Policy: Delete files older than 5 days
+# 4. Retention Policy: Delete files older than 5 days
 # Calculate cutoff date
 :local cutDay ([:tonum $day] - 5)
 :local cutMonth $monthNum
@@ -138,3 +112,20 @@
         }
     }
 }
+
+# 5. Send Notification
+:global TelegramSendMessage
+:global DiscordSendMessage
+:local tgMsg ""
+:local discordMsg ""
+
+:if ($processError) do={
+    :set tgMsg ("Backup <b>FAILED</b>\nDevice: " . $sysname . "\nError: " . $logMessage . "\nTime: " . $date . " " . $time)
+    :set discordMsg ("{\"embeds\":[{\"color\":16711680,\"fields\":[{\"name\":\"Backup FAILED\",\"value\":\"Device: " . $sysname . "\\nError: " . $logMessage . "\\nTime: " . $date . " " . $time . "\"}]}]}")
+} else={
+    :set tgMsg ("Backup <b>SUCCESS</b>\nDevice: " . $sysname . "\nFile: " . $filename . "\nTime: " . $date . " " . $time)
+    :set discordMsg ("{\"embeds\":[{\"color\":65280,\"fields\":[{\"name\":\"Backup SUCCESS\",\"value\":\"Device: " . $sysname . "\\nFile: " . $filename . "\\nTime: " . $date . " " . $time . "\"}]}]}")
+}
+
+:if ([:typeof $TelegramSendMessage] = "code") do={ $TelegramSendMessage message=$tgMsg }
+:if ([:typeof $DiscordSendMessage] = "code") do={ $DiscordSendMessage message=$discordMsg }
