@@ -24,6 +24,8 @@
 :local sshPassword "password"
 :local sshPort 22
 :local sshDstPath ""
+:local sftpRetries 5
+:local sftpRetryDelay 10s
 
 # Parse Date (format: mmm/dd/yyyy)
 :local year
@@ -80,14 +82,23 @@
 # =====3. Upload via SSH (SFTP)=====
 :if ($sshEnabled) do={
     :log info "Uploading backups via SFTP..."
-    :do {
-        /tool fetch mode=sftp address=$sshAddress port=$sshPort user=$sshUser password=$sshPassword src-path=("$filepath" . ".backup") upload=yes dst-path=($sshDstPath . $filename . ".backup")
-        /tool fetch mode=sftp address=$sshAddress port=$sshPort user=$sshUser password=$sshPassword src-path=("$filepath" . ".rsc") upload=yes dst-path=($sshDstPath . $filename . ".rsc")
-        :log info "Backup upload successful."
-    } on-error={
-        :log error "Backup upload failed."
+    :local uploadSuccess false
+    :local attempt 1
+    :while ($attempt <= $sftpRetries && !$uploadSuccess) do={
+        :do {
+            /tool fetch mode=sftp address=$sshAddress port=$sshPort user=$sshUser password=$sshPassword src-path=("$filepath" . ".backup") upload=yes dst-path=($sshDstPath . $filename . ".backup")
+            /tool fetch mode=sftp address=$sshAddress port=$sshPort user=$sshUser password=$sshPassword src-path=("$filepath" . ".rsc") upload=yes dst-path=($sshDstPath . $filename . ".rsc")
+            :set uploadSuccess true
+            :log info "Backup upload successful."
+        } on-error={
+            :log warning ("SFTP upload failed on attempt " . $attempt . "/" . $sftpRetries)
+            :set attempt ($attempt + 1)
+            :if ($attempt <= $sftpRetries) do={ :delay $sftpRetryDelay }
+        }
+    }
+    :if (!$uploadSuccess) do={
         :set processError true
-        :set logMessage ($logMessage . " SFTP upload failed.")
+        :set logMessage ($logMessage . " SFTP upload failed after " . $sftpRetries . " attempts.")
     }
 }
 
