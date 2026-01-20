@@ -253,6 +253,8 @@ Creates daily backups, manages retention, and optionally uploads to SFTP.
    :local sshPassword "your_password"
    ```
 
+> **ℹ️ Note**: If using **Hetzner Storage Box** for SFTP, use **port 22**, not port 23 as indicated in the Hetzner documents.
+
 > **ℹ️ Note**: Discord notifications are **disabled by default**. To enable them, uncomment the `$DiscordSendMessage` line at the bottom of the script.
 
 ### ⏱️ Automate Backup with Scheduler
