@@ -14,19 +14,24 @@ Send notifications from a **MikroTik RouterOS** device using scripts, with a rea
 
 * 📩 Send notifications to Telegram and Discord
 * 🔍 Monitor server availability (ping-based)
+* 🔄 Automate DNS failover for redundancy
+* 💾 Perform daily backups with retention and SFTP upload
 * ⏱ Run checks automatically via Scheduler
 
-The included examples monitor the **on/off status of an OpenMediaVault (OMV) server** on a local network and send notifications when status changes. Optional DNS failover monitoring is also available.
+The included examples cover monitoring server status (e.g., OpenMediaVault), ensuring DNS reliability, and securing configuration backups off-site.
 
 ---
 
 ## Features
 
-* Telegram notification sender script
-* Discord notification sender script
-* Server availability monitoring (ping / ICMP)
-* Status-change detection (UP → DOWN, DOWN → UP)
-* Pure RouterOS scripting — no external dependencies
+*   Telegram and Discord notification sender scripts
+*   Server availability monitoring (ping / ICMP)
+*   Status-change detection (UP → DOWN, DOWN → UP) to prevent alert spam
+*   Automatic DNS failover monitoring with notifications
+*   Daily automated backups (binary `.backup` and script `.rsc`)
+*   SFTP upload for off-site backup storage
+*   Local backup retention policy to manage disk space
+*   Pure RouterOS scripting — no external dependencies
 
 ---
 
