@@ -13,10 +13,12 @@
 :global DiscordSendMessage
 /system script run MikNotiMessage
 
-# SSH / SFTP Configuration
+# ===== Local Backup Configuration =====
+:local backupPath "usb1-part1"
+
+# ===== SSH / SFTP Configuration =====
 :local sshEnabled false
 :local sshAddress "192.168.1.100"
-:local backupPath "usb1-part1"
 :local sshUser "backup_user"
 :local sshPassword "backup_password"
 :local sshPort 22
@@ -97,17 +99,11 @@
 
     :if ($cutDay <= 0) do={
         :set cutMonth ($cutMonth - 1)
-        :if ($cutMonth = 0) do={
-            :set cutMonth 12
-            :set cutYear ($cutYear - 1)
-        }
-        :local daysInMonth 31
-        :if ($cutMonth = 4 || $cutMonth = 6 || $cutMonth = 9 || $cutMonth = 11) do={ :set daysInMonth 30 }
-        :if ($cutMonth = 2) do={
-            :set daysInMonth 28
-            :if (($cutYear % 4 = 0) && (($cutYear % 100 != 0) || ($cutYear % 400 = 0))) do={ :set daysInMonth 29 }
-        }
-        :set cutDay ($daysInMonth + $cutDay)
+        :if ($cutMonth = 0) do={ :set cutMonth 12; :set cutYear ($cutYear - 1) }
+        :local dim 31
+        :if ($cutMonth = 4 || $cutMonth = 6 || $cutMonth = 9 || $cutMonth = 11) do={ :set dim 30 }
+        :if ($cutMonth = 2) do={ :set dim 28; :if ($cutYear % 4 = 0) do={ :set dim 29 } }
+        :set cutDay ($dim + $cutDay)
     }
 
     # Format cutoff YYYYMMDD
@@ -118,20 +114,16 @@
     :local cutoffDateStr "$cutYear$cutMonthStr$cutDayStr"
 
     :log info "Cleaning up backups older than $cutoffDateStr on $backupPath/..."
-    :foreach i in=[/file find where name~("^" . $backupPath . "/")] do={
+    :foreach i in=[/file find where name~("^" . $backupPath . "/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-.*") and (name~"\\.backup\$" or name~"\\.rsc\$")] do={
         :local fname [/file get $i name]
-        :local shortName [:pick $fname ([:len $backupPath] + 1) [:len $fname]]
-        # Check if filename starts with 8 digits (YYYYMMDD) and ends with .backup or .rsc
-        :if (([:pick $shortName 0 8] ~ "^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]") && ($fname ~ "\\.backup\$" || $fname ~ "\\.rsc\$")) do={
-            :local fileDateStr [:pick $shortName 0 8]
-            :if ($fileDateStr < $cutoffDateStr) do={
-                :log info "Deleting old backup: $shortName"
-                /file remove $i
-            }
+        :local fileDateStr [:pick $fname ([:len $backupPath] + 1) ([:len $backupPath] + 9)]
+        :if ($fileDateStr < $cutoffDateStr) do={
+            :log info ("Deleting old backup: " . [:pick $fname ([:len $backupPath] + 1) [:len $fname]])
+            /file remove $i
         }
     }
 } else={
-    :log warning "New backup file not found. Skipping retention cleanup."
+    :log warning "Backup file not found. Skipping retention cleanup."
 }
 
 # 5. Send Notification

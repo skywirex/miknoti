@@ -243,14 +243,17 @@ Creates daily backups, manages retention, and optionally uploads to SFTP.
      ✅ sensitive (required if storing SSH passwords)
 3. Copy the content of `DailyBackup.rsc`
 4. **Configuration**:
-   Edit the top section to enable SSH/SFTP if desired:
+   Edit the top section to configure the backup path and enable SSH/SFTP if desired:
 
    ```routeros
-   :local sshEnabled true
+   :local sshEnabled true          # Set to true to enable SFTP upload
    :local sshAddress "192.168.1.100"
+   :local backupPath "usb1-part1"  # Change to your USB disk name
    :local sshUser "backup_user"
    :local sshPassword "your_password"
    ```
+
+> **ℹ️ Note**: Discord notifications are **disabled by default**. To enable them, uncomment the `$DiscordSendMessage` line at the bottom of the script.
 
 ### ⏱️ Automate Backup with Scheduler
 
