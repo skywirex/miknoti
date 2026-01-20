@@ -23,7 +23,7 @@
 :local sshUser "username"
 :local sshPassword "password"
 :local sshPort 22
-:local sshDstPath "/backup/"
+:local sshDstPath "backup/"
 
 # Parse Date (format: mmm/dd/yyyy)
 :local year
