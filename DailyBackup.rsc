@@ -8,30 +8,47 @@
 :local date [/system clock get date]
 :local time [/system clock get time]
 
-# Load Notification Functions
-:if ([:len [/system script find name=MikNotiMessage]] > 0) do={ /system script run MikNotiMessage }
+# ===== GLOBAL VARIABLES =====
+:global TelegramSendMessage
+:global DiscordSendMessage
+/system script run MikNotiMessage
 
 # SSH / SFTP Configuration
 :local sshEnabled false
 :local sshAddress "192.168.1.100"
+:local backupPath "usb1-part1"
 :local sshUser "backup_user"
 :local sshPassword "backup_password"
 :local sshPort 22
 :local sshDstPath "/backups/"
 
 # Parse Date (format: mmm/dd/yyyy)
-:local months ("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec")
-:local monthStr [:pick $date 0 3]
-:local day [:pick $date 4 6]
-:local year [:pick $date 7 11]
+:local year
+:local monthStr
+:local day
+:local monthNum
 
-# Convert month name to number
-:local monthNum ([:find $months $monthStr] + 1)
-:if ($monthNum < 10) do={ :set monthStr ("0" . $monthNum) } else={ :set monthStr [:tostr $monthNum] }
+# Handle different date formats (MMM/DD/YYYY or YYYY-MM-DD)
+:if ([:pick $date 4 5] = "-") do={
+    :set year [:pick $date 0 4]
+    :set monthStr [:pick $date 5 7]
+    :set day [:pick $date 8 10]
+    :set monthNum [:tonum $monthStr]
+} else={
+    :set monthStr [:pick $date 0 3]
+    :set day [:pick $date 4 6]
+    :set year [:pick $date 7 11]
+    :local months ("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+    :set monthNum (([:find $months $monthStr] % 12) + 1)
+    :if ($monthNum < 10) do={ :set monthStr ("0" . $monthNum) } else={ :set monthStr [:tostr $monthNum] }
+}
+# Ensure day is 2 digits
+:if ([:tonum $day] < 10) do={ :set day ("0" . [:tonum $day]) }
 
 # Construct Filename: YYYYMMDD-Identity
 :local filename "$year$monthStr$day-$sysname"
-:local filepath "usb1-part1/$filename"
+:if ([:pick $backupPath ([:len $backupPath]-1) [:len $backupPath]] = "/") do={ :set backupPath [:pick $backupPath 0 ([:len $backupPath]-1)] }
+:local filepath "$backupPath/$filename"
 
 # Status tracking
 :local processError false
@@ -72,50 +89,52 @@
 }
 
 # 4. Retention Policy: Delete files older than 5 days
-# Calculate cutoff date
-:local cutDay ([:tonum $day] - 5)
-:local cutMonth $monthNum
-:local cutYear [:tonum $year]
+:if ([:len [/file find name=($filepath . ".backup")]] > 0) do={
+    # Calculate cutoff date
+    :local cutDay ([:tonum $day] - 5)
+    :local cutMonth $monthNum
+    :local cutYear [:tonum $year]
 
-:if ($cutDay <= 0) do={
-    :set cutMonth ($cutMonth - 1)
-    :if ($cutMonth = 0) do={
-        :set cutMonth 12
-        :set cutYear ($cutYear - 1)
+    :if ($cutDay <= 0) do={
+        :set cutMonth ($cutMonth - 1)
+        :if ($cutMonth = 0) do={
+            :set cutMonth 12
+            :set cutYear ($cutYear - 1)
+        }
+        :local daysInMonth 31
+        :if ($cutMonth = 4 || $cutMonth = 6 || $cutMonth = 9 || $cutMonth = 11) do={ :set daysInMonth 30 }
+        :if ($cutMonth = 2) do={
+            :set daysInMonth 28
+            :if (($cutYear % 4 = 0) && (($cutYear % 100 != 0) || ($cutYear % 400 = 0))) do={ :set daysInMonth 29 }
+        }
+        :set cutDay ($daysInMonth + $cutDay)
     }
-    :local daysInMonth 31
-    :if ($cutMonth = 4 || $cutMonth = 6 || $cutMonth = 9 || $cutMonth = 11) do={ :set daysInMonth 30 }
-    :if ($cutMonth = 2) do={
-        :set daysInMonth 28
-        :if (($cutYear % 4 = 0) && (($cutYear % 100 != 0) || ($cutYear % 400 = 0))) do={ :set daysInMonth 29 }
-    }
-    :set cutDay ($daysInMonth + $cutDay)
-}
 
-# Format cutoff YYYYMMDD
-:local cutMonthStr [:tostr $cutMonth]
-:if ([:len $cutMonthStr] = 1) do={ :set cutMonthStr ("0" . $cutMonthStr) }
-:local cutDayStr [:tostr $cutDay]
-:if ([:len $cutDayStr] = 1) do={ :set cutDayStr ("0" . $cutDayStr) }
-:local cutoffDateStr "$cutYear$cutMonthStr$cutDayStr"
+    # Format cutoff YYYYMMDD
+    :local cutMonthStr [:tostr $cutMonth]
+    :if ([:len $cutMonthStr] = 1) do={ :set cutMonthStr ("0" . $cutMonthStr) }
+    :local cutDayStr [:tostr $cutDay]
+    :if ([:len $cutDayStr] = 1) do={ :set cutDayStr ("0" . $cutDayStr) }
+    :local cutoffDateStr "$cutYear$cutMonthStr$cutDayStr"
 
-:log info "Cleaning up backups older than $cutoffDateStr on usb1-part1..."
-:foreach i in=[/file find where name~"^usb1-part1/"] do={
-    :local fname [/file get $i name]
-    :local shortName [:pick $fname ([:len "usb1-part1/"]) [:len $fname]]
-    # Check if filename starts with 8 digits (YYYYMMDD)
-    :if ([:pick $shortName 0 8] ~ "^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]") do={
-        :local fileDateStr [:pick $shortName 0 8]
-        :if ($fileDateStr < $cutoffDateStr) do={
-            :log info "Deleting old backup: $fname"
-            /file remove $i
+    :log info "Cleaning up backups older than $cutoffDateStr on $backupPath/..."
+    :foreach i in=[/file find where name~("^" . $backupPath . "/")] do={
+        :local fname [/file get $i name]
+        :local shortName [:pick $fname ([:len $backupPath] + 1) [:len $fname]]
+        # Check if filename starts with 8 digits (YYYYMMDD) and ends with .backup or .rsc
+        :if (([:pick $shortName 0 8] ~ "^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]") && ($fname ~ "\\.backup\$" || $fname ~ "\\.rsc\$")) do={
+            :local fileDateStr [:pick $shortName 0 8]
+            :if ($fileDateStr < $cutoffDateStr) do={
+                :log info "Deleting old backup: $shortName"
+                /file remove $i
+            }
         }
     }
+} else={
+    :log warning "New backup file not found. Skipping retention cleanup."
 }
 
 # 5. Send Notification
-:global TelegramSendMessage
-:global DiscordSendMessage
 :local tgMsg ""
 :local discordMsg ""
 
@@ -127,5 +146,5 @@
     :set discordMsg ("{\"embeds\":[{\"color\":65280,\"fields\":[{\"name\":\"Backup SUCCESS\",\"value\":\"Device: " . $sysname . "\\nFile: " . $filename . "\\nTime: " . $date . " " . $time . "\"}]}]}")
 }
 
-:if ([:typeof $TelegramSendMessage] = "code") do={ $TelegramSendMessage message=$tgMsg }
-:if ([:typeof $DiscordSendMessage] = "code") do={ $DiscordSendMessage message=$discordMsg }
+$TelegramSendMessage message=$tgMsg
+#$DiscordSendMessage message=$discordMsg
