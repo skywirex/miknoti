@@ -20,10 +20,10 @@
 # ===== SSH / SFTP Configuration =====
 :local sshEnabled false
 :local sshAddress "192.168.1.100"
-:local sshUser "backup_user"
-:local sshPassword "backup_password"
+:local sshUser "username"
+:local sshPassword "password"
 :local sshPort 22
-:local sshDstPath "/backups/"
+:local sshDstPath "/backup/"
 
 # Parse Date (format: mmm/dd/yyyy)
 :local year
@@ -132,11 +132,11 @@
 :local discordMsg ""
 
 :if ($processError) do={
-    :set tgMsg ("Backup <b>FAILED</b>\nDevice: " . $sysname . "\nError: " . $logMessage . "\nTime: " . $date . " " . $time)
-    :set discordMsg ("{\"embeds\":[{\"color\":16711680,\"fields\":[{\"name\":\"Backup FAILED\",\"value\":\"Device: " . $sysname . "\\nError: " . $logMessage . "\\nTime: " . $date . " " . $time . "\"}]}]}")
+    :set tgMsg ("Device: " . $sysname . " Backup <b>FAILED</b>\nError: " . $logMessage . "\nTime: " . $date . " " . $time)
+    :set discordMsg ("{\"embeds\":[{\"color\":16711680,\"fields\":[{\"name\":\"Device: " . $sysname . " Backup FAILED\",\"value\":\"Error: " . $logMessage . "\\nTime: " . $date . " " . $time . "\"}]}]}")
 } else={
-    :set tgMsg ("Backup <b>SUCCESS</b>\nDevice: " . $sysname . "\nFile: " . $filename . "\nTime: " . $date . " " . $time)
-    :set discordMsg ("{\"embeds\":[{\"color\":65280,\"fields\":[{\"name\":\"Backup SUCCESS\",\"value\":\"Device: " . $sysname . "\\nFile: " . $filename . "\\nTime: " . $date . " " . $time . "\"}]}]}")
+    :set tgMsg ("Device: " . $sysname . " Backup <b>SUCCESS</b>\nFile: " . $filename . "\nTime: " . $date . " " . $time)
+    :set discordMsg ("{\"embeds\":[{\"color\":65280,\"fields\":[{\"name\":\"Device: " . $sysname . " Backup SUCCESS\",\"value\":\"File: " . $filename . "\\nTime: " . $date . " " . $time . "\"}]}]}")
 }
 
 $TelegramSendMessage message=$tgMsg
