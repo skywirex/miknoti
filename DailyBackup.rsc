@@ -23,7 +23,7 @@
 :local sshUser "username"
 :local sshPassword "password"
 :local sshPort 22
-:local sshDstPath "backup/"
+:local sshDstPath ""
 
 # Parse Date (format: mmm/dd/yyyy)
 :local year
@@ -48,7 +48,7 @@
 # Ensure day is 2 digits
 :if ([:tonum $day] < 10) do={ :set day ("0" . [:tonum $day]) }
 
-# Construct Filename: YYYYMMDD-Identity-SerialNumber
+# ===== Filename: YYYYMMDD-Identity-SerialNumber =====
 :local filename "$year$monthStr$day-$sysname-$serialNumber"
 :if ([:pick $backupPath ([:len $backupPath]-1) [:len $backupPath]] = "/") do={ :set backupPath [:pick $backupPath 0 ([:len $backupPath]-1)] }
 :local filepath "$backupPath/$filename"
@@ -65,19 +65,19 @@
         /system backup save name=$filepath
     } on-error={
         :set processError true
-        :set logMessage ($logMessage . "\nBinary backup failed.")
+        :set logMessage ($logMessage . " Binary backup failed.")
     }
 }
 
-# 2. Configuration Export (.rsc)
+# =====2. Configuration Export (.rsc)=====
 :do {
     /export file=$filepath
 } on-error={
     :set processError true
-    :set logMessage ($logMessage . "\nConfig export failed.")
+    :set logMessage ($logMessage . " Config export failed.")
 }
 
-# 3. Upload via SSH (SFTP)
+# =====3. Upload via SSH (SFTP)=====
 :if ($sshEnabled) do={
     :log info "Uploading backups via SFTP..."
     :do {
@@ -87,11 +87,11 @@
     } on-error={
         :log error "Backup upload failed."
         :set processError true
-        :set logMessage ($logMessage . "\nSFTP upload failed.")
+        :set logMessage ($logMessage . " SFTP upload failed.")
     }
 }
 
-# 4. Retention Policy: Delete files older than 5 days
+# =====4. Retention Policy: Delete files older than 5 days=====
 :if ([:len [/file find name=($filepath . ".backup")]] > 0) do={
     # Calculate cutoff date
     :local cutDay ([:tonum $day] - 5)
@@ -127,7 +127,7 @@
     :log warning "Backup file not found. Skipping retention cleanup."
 }
 
-# 5. Send Notification
+# =====5. Send Notification=====
 :local tgMsg ""
 :local discordMsg ""
 
@@ -138,6 +138,6 @@
     :set tgMsg ("Device: " . $sysname . " Backup <b>SUCCESS</b>\nFile: " . $filename . "\nTime: " . $date . " " . $time)
     :set discordMsg ("{\"embeds\":[{\"color\":65280,\"fields\":[{\"name\":\"Device: " . $sysname . " Backup SUCCESS\",\"value\":\"File: " . $filename . "\\nTime: " . $date . " " . $time . "\"}]}]}")
 }
-
+# UNCOMMENT to enable Discord
 $TelegramSendMessage message=$tgMsg
 #$DiscordSendMessage message=$discordMsg
