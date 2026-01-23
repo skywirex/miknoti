@@ -276,7 +276,7 @@ on-event="/system script run DailyBackup"
 
 ---
 
-You can also **power ON** the server remotely using Wake-on-LAN.
+## **power ON** the server remotely using Wake-on-LAN.
 
 ### Steps:
 
@@ -296,4 +296,4 @@ You can also **power ON** the server remotely using Wake-on-LAN.
 
 ## To Do
 
-* Notifications for ntfy
+* ......
