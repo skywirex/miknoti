@@ -14,19 +14,24 @@ Send notifications from a **MikroTik RouterOS** device using scripts, with a rea
 
 * 📩 Send notifications to Telegram and Discord
 * 🔍 Monitor server availability (ping-based)
+* 🔄 Automate DNS failover for redundancy
+* 💾 Perform daily backups with retention and SFTP upload
 * ⏱ Run checks automatically via Scheduler
 
-The included examples monitor the **on/off status of an OpenMediaVault (OMV) server** on a local network and send notifications when status changes. Optional DNS failover monitoring is also available.
+The included examples cover monitoring server status (e.g., OpenMediaVault), ensuring DNS reliability, and securing configuration backups off-site.
 
 ---
 
 ## Features
 
-* Telegram notification sender script
-* Discord notification sender script
-* Server availability monitoring (ping / ICMP)
-* Status-change detection (UP → DOWN, DOWN → UP)
-* Pure RouterOS scripting — no external dependencies
+*   Telegram and Discord notification sender scripts
+*   Server availability monitoring (ping / ICMP)
+*   Status-change detection (UP → DOWN, DOWN → UP) to prevent alert spam
+*   Automatic DNS failover monitoring with notifications
+*   Daily automated backups (binary `.backup` and script `.rsc`)
+*   SFTP upload for off-site backup storage
+*   Local backup retention policy to manage disk space
+*   Pure RouterOS scripting — no external dependencies
 
 ---
 
@@ -73,6 +78,7 @@ The included examples monitor the **on/off status of an OpenMediaVault (OMV) ser
 | `MikNotiMessage.rsc`      | Telegram & Discord send functions |
 | `OMV_Monitor.rsc`         | Example OpenMediaVault monitor |
 | `DNS_Failover.rsc`        | Automatic DNS failover monitor |
+| `DailyBackup.rsc`         | Daily backup with SFTP & Retention |
 
 ---
 
@@ -217,7 +223,60 @@ The script will only notify when DNS status **actually changes**, avoiding spam.
 
 ---
 
-You can also **power ON** the server remotely using Wake-on-LAN.
+## 💾 Daily Backup Script
+
+Creates daily backups, manages retention, and optionally uploads to SFTP.
+
+### Features
+
+* **Dual Backup**: Creates both binary (`.backup`) and script (`.rsc`) exports.
+* **Smart Naming**: Files are named `YYYYMMDD-Identity`.
+* **Retention Policy**: Automatically deletes local backups older than 5 days on `usb1-part1`.
+* **SFTP Upload**: Optional secure upload to a remote server.
+* **Notifications**: Sends status reports via Telegram/Discord.
+
+### Step 4️⃣ Create Daily Backup Script
+
+1. Go to **System → Scripts → Add New**
+2. Set:
+   * **Name**: `DailyBackup`
+   * **Policies**:
+     ✅ read
+     ✅ write
+     ✅ policy
+     ✅ test
+     ✅ sensitive (required if storing SSH passwords)
+3. Copy the content of `DailyBackup.rsc`
+4. **Configuration**:
+   Edit the top section to configure the backup path and enable SSH/SFTP if desired:
+
+   ```routeros
+   :local sshEnabled true          # Set to true to enable SFTP upload
+   :local sshAddress "192.168.1.100"
+   :local backupPath "usb1-part1"  # Change to your USB disk name
+   :local sshUser "backup_user"
+   :local sshPassword "your_password"
+   ```
+
+> **ℹ️ Note**: If using **Hetzner Storage Box** for SFTP, use **port 22**, not port 23 as indicated in the Hetzner documents.
+
+> **ℹ️ Note**: Discord notifications are **disabled by default**. To enable them, uncomment the `$DiscordSendMessage` line at the bottom of the script.
+
+### ⏱️ Automate Backup with Scheduler
+
+Run the backup every day at 3:00 AM:
+
+```routeros
+/system scheduler add \
+name=daily-backup \
+start-time=03:00:00 \
+interval=1d \
+on-event="/system script run DailyBackup"
+```
+
+---
+
+## **power ON** the server remotely using Wake-on-LAN.
 
 ### Steps:
 
@@ -237,4 +296,4 @@ You can also **power ON** the server remotely using Wake-on-LAN.
 
 ## To Do
 
-* Notifications for ntfy
+* ......
