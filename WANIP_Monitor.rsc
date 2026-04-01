@@ -35,8 +35,10 @@
     :if (([:typeof $wanIpv4Last] = "nothing") || ($currentIpv4 != $wanIpv4Last)) do={
         # Only send notification if the new IP is not empty
         :if ([:len $currentIpv4] > 0) do={
-            :local message "WAN IPv4 Changed\nNew IP: <b>$currentIpv4</b>\nTime: $curDate $curTime"
-            $TelegramSendMessage message=$message
+            :local tgMsg "WAN IPv4 Changed\nNew IP: <b>$currentIpv4</b>\nTime: $curDate $curTime"
+            :local discordMsg ("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv4 Changed\",\"value\":\"New IP: " . $currentIpv4 . "\\nTime: " . $curDate . " " . $curTime . "\"}]}]}")
+            $TelegramSendMessage message=$tgMsg
+            $DiscordSendMessage message=$discordMsg
             :log info "WANIP_Monitor: WAN IPv4 changed to $currentIpv4"
         }
         :set wanIpv4Last $currentIpv4
@@ -60,8 +62,10 @@
     :if (([:typeof $wanIpv6Last] = "nothing") || ($currentIpv6 != $wanIpv6Last)) do={
         # Only proceed if the new IP is not empty
         :if ([:len $currentIpv6] > 0) do={
-            :local message "WAN IPv6 Changed\nNew Prefix: <b>$currentIpv6</b>\nTime: $curDate $curTime"
-            $TelegramSendMessage message=$message
+            :local tgMsg "WAN IPv6 Changed\nNew Prefix: <b>$currentIpv6</b>\nTime: $curDate $curTime"
+            :local discordMsg ("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv6 Changed\",\"value\":\"New Prefix: " . $currentIpv6 . "\\nTime: " . $curDate . " " . $curTime . "\"}]}]}")
+            $TelegramSendMessage message=$tgMsg
+            $DiscordSendMessage message=$discordMsg
             :log info "WANIP_Monitor: WAN IPv6 changed to $currentIpv6"
 
             # --- Update IPv6 Route ---
