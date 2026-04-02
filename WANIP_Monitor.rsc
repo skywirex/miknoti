@@ -4,89 +4,93 @@
 :global DiscordSendMessage
 /system script run MikNotiMessage
 
-# ===== CONFIG =====
+# ===== CONFIG ====================================================
 :global wanInterface     "pppoe-out1"
 :global ipv6PoolName     "ipv6-pool-vnpt"
 :global ipv6RouteSuffix  "1111::/80"
 :global ipv6RouteGateway "fe80::f3d1:71a:a23f:8f1c%bridgeLAN"
 :global ipv6RouteComment "IP6_ROUTE"
-# ===== END CONFIG =====
+# ===== END CONFIG ================================================
 
 :global wanIpv4Last
 :global wanIpv6Last
 
-# --- Get Current Date and Time ---
-:local curDate [/system clock get date]
-:local curTime [/system clock get time]
+:local now ([/system clock get date] . " " . [/system clock get time])
 
-# -------------------- IPv4 CHECK --------------------
-:do {
-    :local currentIpv4 ""
-    # Find the IPv4 address on the specified WAN interface
-    :local ipId [/ip address find interface=$wanInterface disabled=no]
-    :if ([:len $ipId] > 0) do={
-        :set currentIpv4 [:pick [/ip address get $ipId address] 0 [:find [/ip address get $ipId address] "/"]]
-    }
+# =============================================================
+# IPv4 CHECK
+# =============================================================
+:local curIpv4 ""
+:local ids4 [/ip address find interface=$wanInterface disabled=no]
+:if ([:len $ids4] > 0) do={
+    :local raw [/ip address get ($ids4->0) address]
+    :set curIpv4 [:pick $raw 0 [:find $raw "/"]]
+}
 
-    # Check if IPv4 has changed or if it's the first run
-    :if (([:typeof $wanIpv4Last] = "nothing") || ($currentIpv4 != $wanIpv4Last)) do={
-        # Only send notification if the new IP is not empty
-        :if ([:len $currentIpv4] > 0) do={
-            :local tgMsg "WAN IPv4 Changed\nNew IP: <b>$currentIpv4</b>\nTime: $curDate $curTime"
-            :local discordMsg ("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv4 Changed\",\"value\":\"New IP: " . $currentIpv4 . "\\nTime: " . $curDate . " " . $curTime . "\"}]}]}")
-            $TelegramSendMessage message=$tgMsg
-            $DiscordSendMessage message=$discordMsg
-            :log info "WANIP_Monitor: WAN IPv4 changed to $currentIpv4"
+:if ($curIpv4 != "") do={
+    :if ([:typeof $wanIpv4Last] = "nothing" || $wanIpv4Last = "") do={
+        :set wanIpv4Last $curIpv4
+        :log info "WANIP_Monitor [IPv4] Initialized: $curIpv4"
+    } else={
+        :if ($curIpv4 != $wanIpv4Last) do={
+            :log info "WANIP_Monitor [IPv4] Changed: $wanIpv4Last -> $curIpv4"
+            $TelegramSendMessage message=("WAN IPv4 Changed\nNew IP: <b>" . $curIpv4 . "</b>\nTime: " . $now)
+            $DiscordSendMessage  message=("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv4 Changed\",\"value\":\"New IP: " . $curIpv4 . "\\nTime: " . $now . "\"}]}]}")
+            :set wanIpv4Last $curIpv4
         }
-        :set wanIpv4Last $currentIpv4
+    }
+} else={
+    :log debug "WANIP_Monitor [IPv4] No address on $wanInterface — skipping."
+}
+
+# =============================================================
+# IPv6 CHECK
+# Get prefix from /ipv6 pool — the most accurate source, can be
+# assigned to a local variable, independent of RouterOS version.
+# =============================================================
+:local curIpv6 ""
+
+:local poolIds [/ipv6 pool find name=$ipv6PoolName]
+:if ([:len $poolIds] > 0) do={
+    :local raw [/ipv6 pool get ($poolIds->0) prefix]
+    :if ([:typeof $raw] != "nothing" && $raw != "") do={
+        :set curIpv6 $raw
     }
 }
 
-# -------------------- IPv6 CHECK --------------------
-:do {
-    :local currentIpv6 ""
-    :local currentIpv6Network ""
-    # Find a global, non-temporary IPv6 address on the WAN interface
-    :local ipIds [/ipv6 address find interface=$wanInterface global !temporary disabled=no]
-    :if ([:len $ipIds] > 0) do={
-        # We use the first address found
-        :local ipId ($ipIds->0)
-        :set currentIpv6 [:pick [/ipv6 address get $ipId address] 0 [:find [/ipv6 address get $ipId address] "/"]]
-        :set currentIpv6Network [/ipv6 address get $ipId network]
-    }
+:if ($curIpv6 != "") do={
+    :if ([:typeof $wanIpv6Last] = "nothing" || $wanIpv6Last = "") do={
+        :set wanIpv6Last $curIpv6
+        :log info "WANIP_Monitor [IPv6] Initialized: $curIpv6"
+    } else={
+        :if ($curIpv6 != $wanIpv6Last) do={
+            :log info "WANIP_Monitor [IPv6] Changed: $wanIpv6Last -> $curIpv6"
+            $TelegramSendMessage message=("WAN IPv6 Prefix Changed\nNew Prefix: <b>" . $curIpv6 . "</b>\nTime: " . $now)
+            $DiscordSendMessage  message=("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv6 Prefix Changed\",\"value\":\"New Prefix: " . $curIpv6 . "\\nTime: " . $now . "\"}]}]}")
 
-    # Check if IPv6 has changed or if it's the first run
-    :if (([:typeof $wanIpv6Last] = "nothing") || ($currentIpv6 != $wanIpv6Last)) do={
-        # Only proceed if the new IP is not empty
-        :if ([:len $currentIpv6] > 0) do={
-            :local tgMsg "WAN IPv6 Changed\nNew Prefix: <b>$currentIpv6</b>\nTime: $curDate $curTime"
-            :local discordMsg ("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv6 Changed\",\"value\":\"New Prefix: " . $currentIpv6 . "\\nTime: " . $curDate . " " . $curTime . "\"}]}]}")
-            $TelegramSendMessage message=$tgMsg
-            $DiscordSendMessage message=$discordMsg
-            :log info "WANIP_Monitor: WAN IPv6 changed to $currentIpv6"
+            # --- Update static IPv6 route ---
+            # curIpv6 = "2001:ee0:d788:26c0::/60"
+            # Split the part before "/", then before "::" to get the base
+            # prefixBase = "2001:ee0:d788:26c0"
+            # newRouteDst = "2001:ee0:d788:26c0:1111::/80"  (1 colon)
+            :local slashPos       [:find $curIpv6 "/"]
+            :local prefixAddr     [:pick $curIpv6 0 $slashPos]
+            :local coloncolonPos  [:find $prefixAddr "::"]
+            :local prefixBase     [:pick $prefixAddr 0 $coloncolonPos]
+            :local newIpv6RouteDst ($prefixBase . ":" . $ipv6RouteSuffix)
 
-            # --- Update IPv6 Route ---
-            # Check if we got a valid network prefix (must be a /64, so ends in "::")
-            :if ([:len $currentIpv6Network] > 0 && [:pick $currentIpv6Network ([:len $currentIpv6Network] - 2) [:len $currentIpv6Network]] = "::") do={
-                :log info "WANIP_Monitor: Updating IPv6 route."
-                
-                # Remove previous route(s) with the same comment
-                :foreach routeId in=[/ipv6 route find comment=$ipv6RouteComment] do={
-                    /ipv6 route remove $routeId
-                }
-                :log info "WANIP_Monitor: Removed old IPv6 route(s)."
-                
-                # Construct the new route destination from the /64 prefix
-                :local networkPrefixBase [:pick $currentIpv6Network 0 ([:len $currentIpv6Network] - 2)]
-                :local newIpv6RouteDst ($networkPrefixBase . ":" . $ipv6RouteSuffix)
-
-                # Add the new route
-                /ipv6 route add dst-address=$newIpv6RouteDst gateway=$ipv6RouteGateway comment=$ipv6RouteComment
-                :log info "WANIP_Monitor: Added new IPv6 route for $newIpv6RouteDst."
-            } else={
-                :log warning "WANIP_Monitor: Could not determine a valid /64 network prefix from '$currentIpv6Network'. Skipping IPv6 route update."
+            # Delete old route with the same comment
+            :foreach rid in=[/ipv6 route find comment=$ipv6RouteComment] do={
+                /ipv6 route remove $rid
             }
+
+            # Add new route
+            /ipv6 route add dst-address=$newIpv6RouteDst gateway=$ipv6RouteGateway comment=$ipv6RouteComment
+            :log info "WANIP_Monitor [IPv6] Route updated -> $newIpv6RouteDst"
+
+            :set wanIpv6Last $curIpv6
         }
-        :set wanIpv6Last $currentIpv6
     }
+} else={
+    :log warning "WANIP_Monitor [IPv6] Pool '$ipv6PoolName' not found or empty — skipping."
 }
