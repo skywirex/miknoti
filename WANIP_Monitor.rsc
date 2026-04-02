@@ -4,15 +4,12 @@
 :global DiscordSendMessage
 /system script run MikNotiMessage
 
-# ===== CONFIG (Please edit these values) =====
-# Set the name of your WAN interface (e.g., pppoe-out1, ether1)
-:local wanInterface "pppoe-out1"
-
-# Define the suffix for the dynamic IPv6 route. This will be appended to your /64 WAN prefix.
-# Example: If WAN prefix is 2001:db8::/64 and suffix is "1111::/80", the route will be for 2001:db8:1111::/80.
-:local ipv6RouteSuffix "1111::/80"
-:local ipv6RouteGateway "fe80::1111:2222:3333:4444%bridgeLAN"
-:local ipv6RouteComment "IP6_ROUTE"
+# ===== CONFIG =====
+:global wanInterface     "pppoe-out1"
+:global ipv6PoolName     "ipv6-pool-vnpt"
+:global ipv6RouteSuffix  "1111::/80"
+:global ipv6RouteGateway "fe80::f3d1:71a:a23f:8f1c%bridgeLAN"
+:global ipv6RouteComment "IP6_ROUTE"
 # ===== END CONFIG =====
 
 :global wanIpv4Last
