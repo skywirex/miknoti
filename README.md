@@ -16,9 +16,10 @@ Send notifications from a **MikroTik RouterOS** device using scripts, with a rea
 * 🔍 Monitor server availability (ping-based)
 * 🔄 Automate DNS failover for redundancy
 * 💾 Perform daily backups with retention and SFTP upload
+* 🌐 Monitor WAN IP changes (IPv4/IPv6) and update routes
 * ⏱ Run checks automatically via Scheduler
 
-The included examples cover monitoring server status (e.g., OpenMediaVault), ensuring DNS reliability, and securing configuration backups off-site.
+The included examples cover monitoring server status (e.g., OpenMediaVault), ensuring DNS reliability, securing configuration backups off-site, and tracking WAN IP changes.
 
 ---
 
@@ -31,6 +32,7 @@ The included examples cover monitoring server status (e.g., OpenMediaVault), ens
 *   Daily automated backups (binary `.backup` and script `.rsc`)
 *   SFTP upload for off-site backup storage
 *   Local backup retention policy to manage disk space
+*   WAN IP monitoring (IPv4 and IPv6) with change notifications and automatic route updates
 *   Pure RouterOS scripting — no external dependencies
 
 ---
@@ -79,6 +81,7 @@ The included examples cover monitoring server status (e.g., OpenMediaVault), ens
 | `OMV_Monitor.rsc`         | Example OpenMediaVault monitor |
 | `DNS_Failover.rsc`        | Automatic DNS failover monitor |
 | `DailyBackup.rsc`         | Daily backup with SFTP & Retention |
+| `WANIP_Monitor.rsc`       | Monitor WAN IPv4/IPv6 changes and update routes |
 
 ---
 
@@ -272,6 +275,52 @@ name=daily-backup \
 start-time=03:00:00 \
 interval=1d \
 on-event="/system script run DailyBackup"
+```
+
+---
+
+## 🌐 WAN IP Monitor Script
+
+Monitors changes to your WAN IPv4 address and IPv6 prefix, sending notifications and automatically updating your IPv6 routes when the prefix changes.
+
+### Features
+
+* **IPv4 Monitoring**: Detects changes on your WAN interface.
+* **IPv6 Monitoring**: Detects prefix changes from your DHCPv6 client pool.
+* **Dynamic Route Update**: Automatically updates static IPv6 routes based on the new prefix.
+* **Notifications**: Sends status reports via Telegram/Discord.
+
+### Step 5️⃣ Create WAN IP Monitor Script
+
+1. Go to **System → Scripts → Add New**
+2. Set:
+   * **Name**: `WANIP_Monitor`
+   * **Policies**:
+     ✅ read
+     ✅ write
+     ✅ policy
+     ✅ test
+3. Copy the content of `WANIP_Monitor.rsc`
+4. **Configuration**:
+   Edit the top section to configure your interfaces and IPv6 route settings:
+
+   ```routeros
+   :global wanInterface     "pppoe-out1"
+   :global ipv6PoolName     "ipv6-pool-vnpt"
+   :global ipv6RouteSuffix  "1111::/80"
+   :global ipv6RouteGateway "fe80::f3d1:71a:a23f:8f1c%bridgeLAN"
+   :global ipv6RouteComment "IP6_ROUTE"
+   ```
+
+### ⏱️ Automate WAN IP Monitor with Scheduler
+
+Run the monitor every 5 minutes:
+
+```routeros
+/system scheduler add \
+name=wanip-monitor \
+interval=5m \
+on-event="/system script run WANIP_Monitor"
 ```
 
 ---
