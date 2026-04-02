@@ -5,19 +5,10 @@
 /system script run MikNotiMessage
 
 # ===== CONFIG ==============================================================================================
-# Name of WAN interface
 :global wanInterface     "pppoe-out1"
-
-# Name of IPv6 pool
 :global ipv6PoolName     "ipv6-pool-vnpt"
-
-# IPv6 route suffix
 :global ipv6RouteSuffix  "1111::/80"
-
-# Gateway for IPv6 Link-Local (fe80::) address 
 :global ipv6RouteGateway "fe80::f3d1:71a:a23f:8f1c%bridgeLAN"
-
-# Comment for IPv6 route
 :global ipv6RouteComment "IP6_ROUTE"
 # ===== END CONFIG ===========================================================================================
 
