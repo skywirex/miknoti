@@ -4,13 +4,13 @@
 :global DiscordSendMessage
 /system script run MikNotiMessage
 
-# ===== CONFIG ====================================================
-:global wanInterface     "pppoe-out1"
-:global ipv6PoolName     "ipv6-pool-vnpt"
-:global ipv6RouteSuffix  "1111::/80"
-:global ipv6RouteGateway "fe80::f3d1:71a:a23f:8f1c%bridgeLAN"      
-:global ipv6RouteComment "IP6_ROUTE"
-# ===== END CONFIG ================================================
+# ===== CONFIG ==============================================================================================
+:global wanInterface     "pppoe-out1"                         # Name of WAN interface
+:global ipv6PoolName     "ipv6-pool-vnpt"                     # Name of IPv6 pool
+:global ipv6RouteSuffix  "1111::/80"                          # IPv6 route suffix
+:global ipv6RouteGateway "fe80::f3d1:71a:a23f:8f1c%bridgeLAN" # Gateway for IPv6 Link-Local (fe80::) address 
+:global ipv6RouteComment "IP6_ROUTE"                          # Comment for IPv6 route
+# ===== END CONFIG ===========================================================================================
 
 :global wanIpv4Last
 :global wanIpv6Last
