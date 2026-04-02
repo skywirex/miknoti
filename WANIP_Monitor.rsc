@@ -7,9 +7,7 @@
 # ===== CONFIG ==============================================================================================
 :global wanInterface     "pppoe-out1"
 :global ipv6PoolName     "ipv6-pool-vnpt"
-:global ipv6RouteSuffix  "1111::/80"
 :global ipv6RouteGateway "fe80::f3d1:71a:a23f:8f1c%bridgeLAN"
-:global ipv6RouteComment "IP6_ROUTE"
 # ===== END CONFIG ===========================================================================================
 
 :global wanIpv4Last
@@ -49,6 +47,8 @@
 # assigned to a local variable, independent of RouterOS version.
 # =============================================================
 :local curIpv6 ""
+:local  ipv6RouteSuffix  "1111::/80"
+:local  ipv6RouteComment "IP6_ROUTE"
 
 :local poolIds [/ipv6 pool find name=$ipv6PoolName]
 :if ([:len $poolIds] > 0) do={
