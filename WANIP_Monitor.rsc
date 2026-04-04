@@ -1,6 +1,7 @@
 # =====Script Name: WANIP_Monitor=====
 # =====Monitoring WAN IP Status of Internet Line=====
-# =====Supports reboot: persists last-known IPs via /system script source=====
+# =====Persist: last-known IPs stored in comment of this script=====
+# =====Comment format: ipv4=x.x.x.x;ipv6=xxxx::/60             =====
 :global TelegramSendMessage
 :global DiscordSendMessage
 /system script run MikNotiMessage
@@ -11,22 +12,40 @@
 :global ipv6RouteGateway "fe80::e3ff:feea:7e29%pppoe-out1"
 # ===== END CONFIG ===========================================================================================
 
-# =====  PERSIST HELPERS  ===========================================================================================
-# Last-known IPs are stored inside two tiny scripts:
-#   "WANIP_Store_IPv4"  →  source contains exactly one line:  :global wanIpv4Last "x.x.x.x"
-#   "WANIP_Store_IPv6"  →  source contains exactly one line:  :global wanIpv6Last "xxxx::/60"
-# These scripts survive reboot; running them restores the globals.
-# ===================================================================================================================
-
 :global wanIpv4Last
 :global wanIpv6Last
 
-# ---- Restore persisted values (no-op on first-ever run) ----
-:if ([:len [/system script find name="WANIP_Store_IPv4"]] > 0) do={
-    /system script run WANIP_Store_IPv4
+# =============================================================
+# RESTORE persisted IPs from comment of this script
+# Comment format:  ipv4=1.2.3.4;ipv6=2001:ee0:d788::/60
+# =============================================================
+:local scriptComment [/system script get [/system script find name="WANIP_Monitor"] comment]
+
+:if ([:typeof $scriptComment] != "nothing" && $scriptComment != "") do={
+    # --- parse ipv4=... ---
+    :local p4 [:find $scriptComment "ipv4="]
+    :if ([:typeof $p4] != "nothing") do={
+        :local rest [:pick $scriptComment ($p4 + 5) [:len $scriptComment]]
+        :local semi [:find $rest ";"]
+        :if ([:typeof $semi] != "nothing") do={
+            :set wanIpv4Last [:pick $rest 0 $semi]
+        } else={
+            :set wanIpv4Last $rest
+        }
+    }
+    # --- parse ipv6=... ---
+    :local p6 [:find $scriptComment "ipv6="]
+    :if ([:typeof $p6] != "nothing") do={
+        :set wanIpv6Last [:pick $scriptComment ($p6 + 5) [:len $scriptComment]]
+    }
 }
-:if ([:len [/system script find name="WANIP_Store_IPv6"]] > 0) do={
-    /system script run WANIP_Store_IPv6
+
+# Helper: save both IPs back into comment of this script
+:local SaveComment do={
+    :global wanIpv4Last
+    :global wanIpv6Last
+    :local c ("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
+    /system script set [/system script find name="WANIP_Monitor"] comment=$c
 }
 
 :local now ([/system clock get date] . " " . [/system clock get time])
@@ -43,26 +62,18 @@
 
 :if ($curIpv4 != "") do={
     :if ([:typeof $wanIpv4Last] = "nothing" || $wanIpv4Last = "") do={
-        # First run ever (no store script yet) — just persist current IP, no alert
         :set wanIpv4Last $curIpv4
         :log info "WANIP_Monitor [IPv4] Initialized (first run): $curIpv4"
+        $SaveComment
     } else={
         :if ($curIpv4 != $wanIpv4Last) do={
             :log info "WANIP_Monitor [IPv4] Changed: $wanIpv4Last -> $curIpv4"
             $TelegramSendMessage message=("WAN IPv4 Changed\nOld IP: <b>" . $wanIpv4Last . "</b>\nNew IP: <b>" . $curIpv4 . "</b>\nTime: " . $now)
             $DiscordSendMessage  message=("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv4 Changed\",\"value\":\"Old: " . $wanIpv4Last . "\\nNew: " . $curIpv4 . "\\nTime: " . $now . "\"}]}]}")
             :set wanIpv4Last $curIpv4
+            $SaveComment
         }
     }
-
-    # ---- Persist current IPv4 ----
-    :local src4 (":global wanIpv4Last \"" . $wanIpv4Last . "\"")
-    :if ([:len [/system script find name="WANIP_Store_IPv4"]] = 0) do={
-        /system script add name="WANIP_Store_IPv4" source=$src4
-    } else={
-        /system script set [/system script find name="WANIP_Store_IPv4"] source=$src4
-    }
-
 } else={
     :log debug "WANIP_Monitor [IPv4] No address on $wanInterface — skipping."
 }
@@ -84,9 +95,9 @@
 
 :if ($curIpv6 != "") do={
     :if ([:typeof $wanIpv6Last] = "nothing" || $wanIpv6Last = "") do={
-        # First run ever — just persist, no alert
         :set wanIpv6Last $curIpv6
         :log info "WANIP_Monitor [IPv6] Initialized (first run): $curIpv6"
+        $SaveComment
     } else={
         :if ($curIpv6 != $wanIpv6Last) do={
             :log info "WANIP_Monitor [IPv6] Changed: $wanIpv6Last -> $curIpv6"
@@ -94,10 +105,10 @@
             $DiscordSendMessage  message=("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv6 Prefix Changed\",\"value\":\"Old: " . $wanIpv6Last . "\\nNew: " . $curIpv6 . "\\nTime: " . $now . "\"}]}]}")
 
             # --- Update static IPv6 route ---
-            :local slashPos       [:find $curIpv6 "/"]
-            :local prefixAddr     [:pick $curIpv6 0 $slashPos]
-            :local coloncolonPos  [:find $prefixAddr "::"]
-            :local prefixBase     [:pick $prefixAddr 0 $coloncolonPos]
+            :local slashPos      [:find $curIpv6 "/"]
+            :local prefixAddr    [:pick $curIpv6 0 $slashPos]
+            :local coloncolonPos [:find $prefixAddr "::"]
+            :local prefixBase    [:pick $prefixAddr 0 $coloncolonPos]
             :local newIpv6RouteDst ($prefixBase . ":" . $ipv6RouteSuffix)
 
             :foreach rid in=[/ipv6 route find comment=$ipv6RouteComment] do={
@@ -107,17 +118,9 @@
             :log info "WANIP_Monitor [IPv6] Route updated -> $newIpv6RouteDst"
 
             :set wanIpv6Last $curIpv6
+            $SaveComment
         }
     }
-
-    # ---- Persist current IPv6 ----
-    :local src6 (":global wanIpv6Last \"" . $wanIpv6Last . "\"")
-    :if ([:len [/system script find name="WANIP_Store_IPv6"]] = 0) do={
-        /system script add name="WANIP_Store_IPv6" source=$src6
-    } else={
-        /system script set [/system script find name="WANIP_Store_IPv6"] source=$src6
-    }
-
 } else={
     :log warning "WANIP_Monitor [IPv6] Pool '$ipv6PoolName' not found or empty — skipping."
 }
