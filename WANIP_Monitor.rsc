@@ -40,15 +40,8 @@
     }
 }
 
-# Helper: save both IPs back into comment of this script
-:local SaveComment do={
-    :global wanIpv4Last
-    :global wanIpv6Last
-    :local c ("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
-    /system script set [/system script find name="WANIP_Monitor"] comment=$c
-}
-
 :local now ([/system clock get date] . " " . [/system clock get time])
+:local selfId [/system script find name="WANIP_Monitor"]
 
 # =============================================================
 # IPv4 CHECK
@@ -64,18 +57,18 @@
     :if ([:typeof $wanIpv4Last] = "nothing" || $wanIpv4Last = "") do={
         :set wanIpv4Last $curIpv4
         :log info "WANIP_Monitor [IPv4] Initialized (first run): $curIpv4"
-        $SaveComment
+        /system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
     } else={
         :if ($curIpv4 != $wanIpv4Last) do={
             :log info "WANIP_Monitor [IPv4] Changed: $wanIpv4Last -> $curIpv4"
             $TelegramSendMessage message=("WAN IPv4 Changed\nOld IP: <b>" . $wanIpv4Last . "</b>\nNew IP: <b>" . $curIpv4 . "</b>\nTime: " . $now)
             $DiscordSendMessage  message=("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv4 Changed\",\"value\":\"Old: " . $wanIpv4Last . "\\nNew: " . $curIpv4 . "\\nTime: " . $now . "\"}]}]}")
             :set wanIpv4Last $curIpv4
-            $SaveComment
+            /system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
         }
     }
 } else={
-    :log debug "WANIP_Monitor [IPv4] No address on $wanInterface — skipping."
+    :log debug "WANIP_Monitor [IPv4] No address on $wanInterface â€” skipping."
 }
 
 # =============================================================
@@ -97,7 +90,7 @@
     :if ([:typeof $wanIpv6Last] = "nothing" || $wanIpv6Last = "") do={
         :set wanIpv6Last $curIpv6
         :log info "WANIP_Monitor [IPv6] Initialized (first run): $curIpv6"
-        $SaveComment
+        /system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
     } else={
         :if ($curIpv6 != $wanIpv6Last) do={
             :log info "WANIP_Monitor [IPv6] Changed: $wanIpv6Last -> $curIpv6"
@@ -118,9 +111,9 @@
             :log info "WANIP_Monitor [IPv6] Route updated -> $newIpv6RouteDst"
 
             :set wanIpv6Last $curIpv6
-            $SaveComment
+            /system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
         }
     }
 } else={
-    :log warning "WANIP_Monitor [IPv6] Pool '$ipv6PoolName' not found or empty — skipping."
+    :log warning "WANIP_Monitor [IPv6] Pool '$ipv6PoolName' not found or empty â€” skipping."
 }
