@@ -15,11 +15,16 @@
 :global wanIpv4Last
 :global wanIpv6Last
 
+# Ensure it's always a string, to avoid type errors when concatenating
+:if ([:typeof $wanIpv4Last] = "nothing") do={ :set wanIpv4Last "" }
+:if ([:typeof $wanIpv6Last] = "nothing") do={ :set wanIpv6Last "" }
+
 # =============================================================
 # RESTORE persisted IPs from comment of this script
 # Comment format:  ipv4=1.2.3.4;ipv6=2001:ee0:d788::/60
 # =============================================================
-:local scriptComment [/system script get [/system script find name="WANIP_Monitor"] comment]
+:local selfId [/system script find name="WANIP_Monitor"]
+:local scriptComment [/system script get $selfId comment]
 
 :if ([:typeof $scriptComment] != "nothing" && $scriptComment != "") do={
     # --- parse ipv4=... ---
@@ -41,7 +46,6 @@
 }
 
 :local now ([/system clock get date] . " " . [/system clock get time])
-:local selfId [/system script find name="WANIP_Monitor"]
 
 # =============================================================
 # IPv4 CHECK
@@ -54,21 +58,19 @@
 }
 
 :if ($curIpv4 != "") do={
-    :if ([:typeof $wanIpv4Last] = "nothing" || $wanIpv4Last = "") do={
+    :if ($wanIpv4Last = "") do={
         :set wanIpv4Last $curIpv4
-        :log info "WANIP_Monitor [IPv4] Initialized (first run): $curIpv4"
-        /system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
+        :log info "WANIP_Monitor [IPv4] Initialized: $curIpv4"
     } else={
         :if ($curIpv4 != $wanIpv4Last) do={
             :log info "WANIP_Monitor [IPv4] Changed: $wanIpv4Last -> $curIpv4"
             $TelegramSendMessage message=("WAN IPv4 Changed\nOld IP: <b>" . $wanIpv4Last . "</b>\nNew IP: <b>" . $curIpv4 . "</b>\nTime: " . $now)
             $DiscordSendMessage  message=("{\"embeds\":[{\"fields\":[{\"name\":\"WAN IPv4 Changed\",\"value\":\"Old: " . $wanIpv4Last . "\\nNew: " . $curIpv4 . "\\nTime: " . $now . "\"}]}]}")
             :set wanIpv4Last $curIpv4
-            /system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
         }
     }
 } else={
-    :log debug "WANIP_Monitor [IPv4] No address on $wanInterface â€” skipping."
+    :log debug "WANIP_Monitor [IPv4] No address on $wanInterface - skipping."
 }
 
 # =============================================================
@@ -87,10 +89,9 @@
 }
 
 :if ($curIpv6 != "") do={
-    :if ([:typeof $wanIpv6Last] = "nothing" || $wanIpv6Last = "") do={
+    :if ($wanIpv6Last = "") do={
         :set wanIpv6Last $curIpv6
-        :log info "WANIP_Monitor [IPv6] Initialized (first run): $curIpv6"
-        /system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
+        :log info "WANIP_Monitor [IPv6] Initialized: $curIpv6"
     } else={
         :if ($curIpv6 != $wanIpv6Last) do={
             :log info "WANIP_Monitor [IPv6] Changed: $wanIpv6Last -> $curIpv6"
@@ -111,9 +112,15 @@
             :log info "WANIP_Monitor [IPv6] Route updated -> $newIpv6RouteDst"
 
             :set wanIpv6Last $curIpv6
-            /system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
         }
     }
 } else={
-    :log warning "WANIP_Monitor [IPv6] Pool '$ipv6PoolName' not found or empty â€” skipping."
+    :log warning "WANIP_Monitor [IPv6] Pool '$ipv6PoolName' not found or empty - skipping."
 }
+
+# =============================================================
+# PERSIST — always write comment at the end, after both IPv4 and IPv6
+# have been processed and wanIpv4Last / wanIpv6Last have the correct values
+# =============================================================
+/system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
+:log info "WANIP_Monitor [Persist] Saved: ipv4=$wanIpv4Last ipv6=$wanIpv6Last"
