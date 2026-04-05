@@ -119,8 +119,10 @@
 }
 
 # =============================================================
-# PERSIST — always write comment at the end, after both IPv4 and IPv6
-# have been processed and wanIpv4Last / wanIpv6Last have the correct values
+# PERSIST — only write comment when IP has changed
 # =============================================================
-/system script set $selfId comment=("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
-:log info "WANIP_Monitor [Persist] Saved: ipv4=$wanIpv4Last ipv6=$wanIpv6Last"
+:local newComment ("ipv4=" . $wanIpv4Last . ";ipv6=" . $wanIpv6Last)
+:if ($newComment != $scriptComment) do={
+    /system script set $selfId comment=$newComment
+    :log info "WANIP_Monitor [Persist] Saved: ipv4=$wanIpv4Last ipv6=$wanIpv6Last"
+}
