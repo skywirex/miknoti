@@ -9,7 +9,7 @@
 # ===== CONFIG ==============================================================================================
 :global wanInterface     "pppoe-out1"
 :global ipv6PoolName     "ipv6-pool-vnpt"
-:global ipv6RouteGateway "fe80::e3ff:feea:7e29%pppoe-out1"
+:global ipv6RouteGateway "fe80::e3ff:feea:7e29%bridgeLAN"
 # ===== END CONFIG ===========================================================================================
 
 :global wanIpv4Last
