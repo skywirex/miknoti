@@ -69,8 +69,6 @@
             :set wanIpv4Last $curIpv4
         }
     }
-} else={
-    :log debug "WANIP_Monitor [IPv4] No address on $wanInterface - skipping."
 }
 
 # =============================================================
@@ -114,8 +112,6 @@
             :set wanIpv6Last $curIpv6
         }
     }
-} else={
-    :log warning "WANIP_Monitor [IPv6] Pool '$ipv6PoolName' not found or empty - skipping."
 }
 
 # =============================================================
