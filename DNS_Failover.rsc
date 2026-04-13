@@ -1,10 +1,9 @@
 # =====Script Name: DNS_Failover=====
-# =====Switches between Private DNS and Google DNS=====
+# =====Switches between Private DNS and Dual-Stack Public DNS (DoH)=====
 
 # ===== CONFIG =====
-:local privateDnsIp "8.8.8.8" # CHANGE TO YOUR DNS
+:local privateDnsIp "172.16.0.254" #CHANGE THIS IP AND DELETE THIS COMMENT
 :local primaryDns $privateDnsIp
-:local secondaryDns "8.8.8.8"
 :local testDomain "google.com"
 
 # ===== GLOBAL VARIABLES =====
@@ -24,19 +23,23 @@
 :local setDnsServers do={
     :local mode $1
     :local primary $2
-    :local secondary $3
     :local msg ""
-    
+
     :if ($mode = "private") do={
-        /ip dns set servers=$primary allow-remote-requests=yes
+        /ip dns set servers=$primary use-doh-server="" verify-doh-cert=no allow-remote-requests=yes cache-max-ttl=1d
         /ip dns cache flush
         :set msg ("DNS switched: " . $primary . " (PRIVATE)")
         :log info "DNS switched: $primary PRIVATE"
-    } else {
-        /ip dns set servers=$secondary allow-remote-requests=yes
+    } else={
+        /ip dns set \
+          servers=2606:4700:4700::1111,2001:4860:4860::8888,1.1.1.1,8.8.8.8 \
+          use-doh-server=https://cloudflare-dns.com/dns-query \
+          verify-doh-cert=no \
+          allow-remote-requests=yes \
+          cache-max-ttl=1d
         /ip dns cache flush
-        :set msg ("DNS switched: " . $secondary . " (GOOGLE)")
-        :log info "DNS switched: $secondary GOOGLE"
+        :set msg "DNS switched: Dual-Stack DoH"
+        :log info "DNS switched: Dual-Stack DoH"
     }
     :return $msg
 }
@@ -72,23 +75,23 @@
     :local msg ""
     :local curTime [/system clock get time]
     :local curDate [/system clock get date]
-    
+
     :if ($privateDnsStatus = "online") do={
-        :set msg [$setDnsServers "private" $primaryDns $secondaryDns]
+        :set msg [$setDnsServers "private" $primaryDns]
         :set dnsFailoverStatus "private"
     } else={
-        :set msg [$setDnsServers "google" $primaryDns $secondaryDns]
-        :set dnsFailoverStatus "google"
+        :set msg [$setDnsServers "public" ""]
+        :set dnsFailoverStatus "public"
     }
-    
+
     # Notification Formatting, UNCOMMENT to enable Discord
     :local tgMsg ("<b>" . $msg . "</b>\nTime: " . $curDate . " " . $curTime . "\nPrivate DNS: " . $privateDnsStatus)
-    #:local discordMsg ("{\"embeds\":[{\"fields\":[{\"name\":\"" . $msg . "\",\"value\":\"Time: " . $curDate . " " . $curTime . "\\nPrivate DNS: " . $privateDnsStatus . "\"}]}]}")    
-    
+    #:local discordMsg ("{\"embeds\":[{\"fields\":[{\"name\":\"" . $msg . "\",\"value\":\"Time: " . $curDate . " " . $curTime . "\\nPrivate DNS: " . $privateDnsStatus . "\"}]}]}")
+
     # Send notifications, UNCOMMENT to enable Discord
     $TelegramSendMessage message=$tgMsg
     #$DiscordSendMessage message=$discordMsg
-    
+
     :set dnsLastStatus $privateDnsStatus
 } else={
     :log debug "DNS Failover: Status unchanged - $privateDnsStatus"
